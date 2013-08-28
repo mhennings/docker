@@ -52,7 +52,7 @@ func (ts *TarSum) encodeHeader(h *tar.Header) error {
 		// {"atime", strconv.Itoa(int(h.AccessTime.UTC().Unix()))},
 		// {"ctime", strconv.Itoa(int(h.ChangeTime.UTC().Unix()))},
 	} {
-		//		Debugf("-->%s<-- -->%s<--", elem[0], elem[1])
+		Debugf("-->%s<-- -->%s<--", elem[0], elem[1])
 		if _, err := ts.h.Write([]byte(elem[0] + elem[1])); err != nil {
 			return err
 		}
