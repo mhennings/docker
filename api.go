@@ -395,13 +395,13 @@ func postImagesCreate(srv *Server, version float64, w http.ResponseWriter, r *ht
 	tag := r.Form.Get("tag")
 	repo := r.Form.Get("repo")
 
-	authEncoded := r.Form.Get("authConfig")
+	authEncoded := r.Header.Get("X-Registry-Auth")
 	authConfig := &auth.AuthConfig{}
 	if authEncoded != "" {
 		authJson := base64.NewDecoder(base64.URLEncoding, strings.NewReader(authEncoded))
 		if err := json.NewDecoder(authJson).Decode(authConfig); err != nil {
 			// for a pull it is not an error if no auth was given
-			// to increase compatibilit to existing api it is defaulting to be empty
+			// to increase compatibility with the existing api it is defaulting to be empty
 			authConfig = &auth.AuthConfig{}
 		}
 	}
@@ -495,17 +495,16 @@ func postImagesPush(srv *Server, version float64, w http.ResponseWriter, r *http
 	}
 	authConfig := &auth.AuthConfig{}
 
-	authEncoded := r.Form.Get("authConfig")
+	authEncoded := r.Header.Get("X-Registry-Auth")
 	if authEncoded != "" {
-		// the new format is to handle the authConfg as a parameter
+		// the new format is to handle the authConfig as a header
 		authJson := base64.NewDecoder(base64.URLEncoding, strings.NewReader(authEncoded))
 		if err := json.NewDecoder(authJson).Decode(authConfig); err != nil {
-			// for a pull it is not an error if no auth was given
-			// to increase compatibilit to existing api it is defaulting to be empty
+			// to increase compatibility to existing api it is defaulting to be empty
 			authConfig = &auth.AuthConfig{}
 		}
 	} else {
-		// the old format is supported for compatibility if there was no authConfig parameter
+		// the old format is supported for compatibility if there was no authConfig header
 		if err := json.NewDecoder(r.Body).Decode(authConfig); err != nil {
 			return err
 		}
