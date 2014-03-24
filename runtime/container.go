@@ -377,6 +377,10 @@ func populateCommand(c *Container) {
 			IPAddress:   network.IPAddress,
 			IPPrefixLen: network.IPPrefixLen,
 		}
+	} else if c.hostConfig.UseHostNetworkStack {
+		en = &execdriver.Network{
+			UseHostNetworkStack: true,
+		}
 	}
 
 	if lxcConf := c.hostConfig.LxcConf; lxcConf != nil {
@@ -436,7 +440,13 @@ func (container *Container) Start() (err error) {
 		return err
 	}
 
-	if container.runtime.config.DisableNetwork {
+	if container.hostConfig.UseHostNetworkStack {
+		// use the hosts configuration
+		container.Config.Hostname = ""
+		container.Config.Domainname = ""
+		container.HostnamePath = "/etc/hostname"
+		container.HostsPath = "/etc/hosts"
+	} else if container.runtime.config.DisableNetwork {
 		container.Config.NetworkDisabled = true
 		container.buildHostnameAndHostsFiles("127.0.1.1")
 	} else {
@@ -662,7 +672,7 @@ ff02::2		ip6-allrouters
 }
 
 func (container *Container) allocateNetwork() error {
-	if container.Config.NetworkDisabled {
+	if container.Config.NetworkDisabled || container.hostConfig.UseHostNetworkStack {
 		return nil
 	}
 

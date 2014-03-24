@@ -27,22 +27,32 @@ func createContainer(c *execdriver.Command) *libcontainer.Container {
 		Context: libcontainer.Context{},
 	}
 
-	container.Networks = []*libcontainer.Network{
-		&loopbackNetwork,
-	}
-
-	if c.Network.Interface != nil {
-		vethNetwork := libcontainer.Network{
-			Mtu:     c.Network.Mtu,
-			Address: fmt.Sprintf("%s/%d", c.Network.Interface.IPAddress, c.Network.Interface.IPPrefixLen),
-			Gateway: c.Network.Interface.Gateway,
-			Type:    "veth",
-			Context: libcontainer.Context{
-				"prefix": "veth",
-				"bridge": c.Network.Interface.Bridge,
-			},
+	if c.Network.UseHostNetworkStack {
+		old := container.Namespaces
+		container.Namespaces = libcontainer.Namespaces{}
+		for _, ns := range old {
+			if ns.Key != "NEWNET" {
+				container.Namespaces = append(container.Namespaces, ns)
+			}
 		}
-		container.Networks = append(container.Networks, &vethNetwork)
+	} else {
+		container.Networks = []*libcontainer.Network{
+			&loopbackNetwork,
+		}
+
+		if c.Network.Interface != nil {
+			vethNetwork := libcontainer.Network{
+				Mtu:     c.Network.Mtu,
+				Address: fmt.Sprintf("%s/%d", c.Network.Interface.IPAddress, c.Network.Interface.IPPrefixLen),
+				Gateway: c.Network.Interface.Gateway,
+				Type:    "veth",
+				Context: libcontainer.Context{
+					"prefix": "veth",
+					"bridge": c.Network.Interface.Bridge,
+				},
+			}
+			container.Networks = append(container.Networks, &vethNetwork)
+		}
 	}
 
 	container.Cgroups.Name = c.ID
@@ -62,7 +72,6 @@ func createContainer(c *execdriver.Command) *libcontainer.Container {
 	for _, m := range c.Mounts {
 		container.Mounts = append(container.Mounts, libcontainer.Mount{m.Source, m.Destination, m.Writable, m.Private})
 	}
-
 	return container
 }
 

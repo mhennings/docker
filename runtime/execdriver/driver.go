@@ -84,8 +84,9 @@ type Driver interface {
 
 // Network settings of the container
 type Network struct {
-	Interface *NetworkInterface `json:"interface"` // if interface is nil then networking is disabled
-	Mtu       int               `json:"mtu"`
+	Interface           *NetworkInterface `json:"interface"` // if interface is nil then networking is disabled
+	Mtu                 int               `json:"mtu"`
+	UseHostNetworkStack bool              `json:"use_host_networking"`
 }
 
 type NetworkInterface struct {
